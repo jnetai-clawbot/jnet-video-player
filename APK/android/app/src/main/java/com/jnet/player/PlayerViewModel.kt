@@ -25,6 +25,10 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
     private val _isPlaying = MutableLiveData(false)
     val isPlaying: LiveData<Boolean> = _isPlaying
 
+    fun setPlaying(playing: Boolean) {
+        _isPlaying.value = playing
+    }
+
     fun addToPlaylist(item: PlaylistItem) {
         val list = _playlist.value ?: mutableListOf()
         list.add(item)

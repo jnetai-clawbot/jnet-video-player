@@ -100,7 +100,7 @@ class MainActivity : AppCompatActivity() {
                 }
 
                 override fun onIsPlayingChanged(isPlaying: Boolean) {
-                    viewModel.isPlaying.postValue(isPlaying)
+                    viewModel.setPlaying(isPlaying)
                     updatePlayPauseButton(isPlaying)
                     if (isPlaying) {
                         handler.post(updateProgressRunnable)
