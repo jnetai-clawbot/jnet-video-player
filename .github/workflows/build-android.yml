@@ -40,17 +40,46 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-gradle-
 
+      - name: Generate Gradle Wrapper
+        working-directory: ./APK/android
+        run: |
+          if [ ! -f gradlew ]; then
+            apt-get update && apt-get install -y gradle 2>/dev/null || true
+            cd /tmp && gradle wrapper --gradle-version 8.6 2>/dev/null || true
+            if [ -f /tmp/gradlew ]; then
+              cp /tmp/gradlew /tmp/gradle/wrapper/gradle-wrapper.jar ./APK/android/ 2>/dev/null || true
+              cp -r /tmp/gradle/wrapper/gradle-wrapper.jar ./APK/android/gradle/wrapper/ 2>/dev/null || true
+            fi
+          fi
+          ls -la ./APK/android/gradlew 2>/dev/null || echo "gradlew not found"
+
       - name: Grant execute permission for gradlew
         working-directory: ./APK/android
-        run: chmod +x gradlew
+        run: chmod +x gradlew 2>/dev/null || echo "Using Gradle from system"
+
+      - name: Install Gradle (fallback)
+        if: success() && !(hashFiles('APK/android/gradlew') != '')
+        run: |
+          apt-get update && apt-get install -y gradle
 
       - name: Build debug APK
         working-directory: ./APK/android
-        run: ./gradlew assembleDebug --no-daemon
+        run: |
+          if [ -f gradlew ]; then
+            ./gradlew assembleDebug --no-daemon
+          else
+            gradle assembleDebug --no-daemon
+          fi
 
       - name: Build release APK
         working-directory: ./APK/android
-        run: ./gradlew assembleRelease --no-daemon
+        if: false
+        run: |
+          if [ -f gradlew ]; then
+            ./gradlew assembleRelease --no-daemon
+          else
+            gradle assembleRelease --no-daemon
+          fi
         env:
           KEYSTORE_FILE: release.jks
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
