@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Primary Background -->
+    <color name="bg_primary">#0D0D0D</color>
+    <color name="bg_secondary">#141414</color>
+    <color name="bg_surface">#1E1E1E</color>
+    <color name="bg_control_bar">#1A1A1A</color>
+    
+    <!-- Accent -->
+    <color name="accent">#33CC33</color>
+    <color name="accent_pressed">#40B340</color>
+    
+    <!-- Text -->
+    <color name="text_primary">#E0E0E0</color>
+    <color name="text_secondary">#808080</color>
+    <color name="text_bright">#FFFFFF</color>
+    
+    <!-- Border -->
+    <color name="border">#333333</color>
+    
+    <!-- States -->
+    <color name="danger">#CC3333</color>
+    <color name="warning">#CC9933</color>
+    
+    <!-- Transparent -->
+    <color name="transparent">#00000000</color>
+    <color name="semi_transparent">#80000000</color>
+</resources>

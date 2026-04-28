@@ -1,0 +1,12 @@
+[Desktop Entry]
+Name=J~NET Video Player
+Comment=Dark themed video player for Linux
+Exec=python3 /path/to/jnet-video-player.py %F
+Icon=jnet-video-player
+Terminal=false
+Type=Application
+MimeType=video/*;audio/*;
+Categories=AudioVideo;Player;Video;
+Keywords=video;player;media;mpv;
+StartupNotify=true
+StartupWMClass=jnet-video-player

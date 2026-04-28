@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">J~NET Player</string>
+    <string name="play">Play</string>
+    <string name="pause">Pause</string>
+    <string name="stop">Stop</string>
+    <string name="open_file">Open File</string>
+    <string name="playlist">Playlist</string>
+    <string name="fullscreen">Fullscreen</string>
+    <string name="volume">Volume</string>
+    <string name="no_files">No files in playlist</string>
+    <string name="loading">Loading...</string>
+</resources>

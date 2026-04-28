@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- Base Dark Theme -->
+    <style name="Theme.JNETPlayer" parent="Theme.Material3.Dark.NoActionBar">
+        <item name="colorPrimary">@color/accent</item>
+        <item name="colorPrimaryDark">@color/bg_primary</item>
+        <item name="colorAccent">@color/accent</item>
+        <item name="android:windowBackground">@color/bg_primary</item>
+        <item name="android:colorBackground">@color/bg_primary</item>
+        <item name="android:statusBarColor">@color/bg_primary</item>
+        <item name="android:navigationBarColor">@color/bg_primary</item>
+        <item name="android:windowFullscreen">false</item>
+        <item name="android:windowContentOverlay">@null</item>
+    </style>
+
+    <!-- Control Button Style -->
+    <style name="ControlButton" parent="Widget.Material3.Button.TextButton">
+        <item name="android:layout_width">48dp</item>
+        <item name="android:layout_height">40dp</item>
+        <item name="android:layout_margin">2dp</item>
+        <item name="android:textSize">16sp</item>
+        <item name="android:textColor">@color/text_primary</item>
+        <item name="backgroundTint">@color/bg_surface</item>
+        <item name="cornerRadius">6dp</item>
+    </style>
+
+    <style name="ControlButton.Accent">
+        <item name="backgroundTint">@color/accent</item>
+        <item name="android:textColor">@color/text_bright</item>
+    </style>
+
+    <!-- Playlist Item Style -->
+    <style name="PlaylistItem">
+        <item name="android:background">?selectableItemBackground</item>
+        <item name="android:padding">8dp</item>
+    </style>
+
+</resources>
