@@ -100,7 +100,7 @@ class MainActivity : AppCompatActivity() {
                 }
 
                 override fun onIsPlayingChanged(isPlaying: Boolean) {
-                    viewModel.isPlaying.value = isPlaying
+                    viewModel.isPlaying.postValue(isPlaying)
                     updatePlayPauseButton(isPlaying)
                     if (isPlaying) {
                         handler.post(updateProgressRunnable)
@@ -344,6 +344,7 @@ class MainActivity : AppCompatActivity() {
                     p.seekTo((p.currentPosition + 10000).coerceAtMost(p.duration))
                     return true
                 }
+                else -> {}
             }
         }
         return super.onKeyDown(keyCode, event)
