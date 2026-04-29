@@ -200,7 +200,7 @@ static const struct xdg_wm_base_listener wm_base_listener = {
 static void xdg_surface_configure(void *data, struct xdg_surface *xdg_surf, uint32_t serial) {
     App *app = (App*)data;
     xdg_surface_ack_configure(xdg_surf, serial);
-    if (app->win_width > 0 && app->win_height > 0) {
+    if (app->win_width > 0 && app->win_height > 0 && app->egl_window && app->egl_init) {
         wl_egl_window_resize(app->egl_window, app->win_width, app->win_height, 0, 0);
     }
 }
@@ -428,10 +428,7 @@ static void app_create_window(App *app, int w, int h) {
         xdg_activation_token_v1_destroy(token);
     }
 
-    wl_surface_commit(app->surface);
-    wl_display_roundtrip(app->display);
-
-    /* EGL init */
+    /* EGL init must happen BEFORE first commit/roundtrip */
     app->egl_disp = eglGetDisplay(app->display);
     if (app->egl_disp == EGL_NO_DISPLAY) {
         fprintf(stderr, "Failed to get EGL display\n");
@@ -463,6 +460,17 @@ static void app_create_window(App *app, int w, int h) {
     gl_init_shaders();
     gl_render_clear();
     eglSwapBuffers(app->egl_disp, app->egl_surf);
+
+    if (app->activation) {
+        struct xdg_activation_token_v1 *token =
+            xdg_activation_v1_get_activation_token(app->activation);
+        xdg_activation_token_v1_set_app_id(token, "jnet-video-player");
+        xdg_activation_token_v1_commit(token);
+        xdg_activation_token_v1_destroy(token);
+    }
+
+    wl_surface_commit(app->surface);
+    wl_display_roundtrip(app->display);
 
     /* Seat */
     if (app->seat) {
