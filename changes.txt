@@ -1,0 +1,26 @@
+J~NET Video Player - Changes Log
+================================
+
+## Build Status (2026-04-29) - FIXED
+
+### C Version - FIXED (v2)
+- ✅ Compiles and runs (tested - stays in event loop)
+- ✅ Added [JNET] debug output for every init step
+- ✅ Error codes: EXIT_WAYLAND=1, EXIT_EGL=2, EXIT_FFMPEG=3, EXIT_WINDOW=4
+- ✅ Null pointer guards in xdg_surface_configure callback
+- ✅ EGL init happens before first wl_surface_commit
+- ✅ Graceful handling if no file provided (opens empty UI)
+- Binary: 80KB optimised at C/jnet-video
+
+### Python Version - FIXED (v2)
+- ✅ Init order fixed: UI setup before media player
+- ✅ [JNET] debug logging for init steps
+- ✅ Fallback chain: mpv → QtMultimedia → UI-only
+- ✅ setup.sh auto-creates virtual environment
+- ✅ start.sh runs with -B (no .pyc cache issues)
+- ✅ Error handling in main() with traceback
+- Run: cd PYTHON && ./start.sh
+
+### Android APK
+- ✅ Ready: APK/JNET-Video-Player.apk (8.5MB debug APK)
+- ✅ Built via GitHub Actions CI

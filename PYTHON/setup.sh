@@ -1,40 +1,29 @@
 #!/bin/bash
 # J~NET Video Player - Python Setup Script
-# Install dependencies and desktop entry
-function venv() {
-    #python3 -m venv venv
-    python3.12 -m venv venv
-    PYTHON_PATH=$(which python3.12)
-    echo "alias python='$PYTHON_PATH'" >> venv/bin/activate
-    source venv/bin/activate
-    echo "Virtual Environment setup and ready!"
-    echo ""
-}
-
+# Installs dependencies in a virtual environment
 
 set -e
 
-venv
+echo "[JNET] Installing J~NET Video Player dependencies..."
 
-echo "Installing J~NET Video Player..."
+# Detect if we're in a venv already
+if [ -n "$VIRTUAL_ENV" ]; then
+    echo "[JNET] Already in virtual environment: $VIRTUAL_ENV"
+else
+    # Create a venv if not exists
+    if [ ! -d "venv" ]; then
+        echo "[JNET] Creating virtual environment..."
+        python3 -m venv venv
+    fi
+    echo "[JNET] Activating virtual environment..."
+    source venv/bin/activate
+fi
 
-# Install Python dependencies
-echo "Installing Python packages..."
-pip install --user PyQt6 python-mpv 2>/dev/null || pip install PyQt6 python-mpv
+# Install Python packages
+echo "[JNET] Installing Python packages..."
+pip install PyQt6 python-mpv 2>&1 | tail -3
 
-# Create desktop entry
-DESKTOP_FILE="$HOME/.local/share/applications/jnet-video-player.desktop"
-mkdir -p "$(dirname "$DESKTOP_FILE")"
-cat > "$DESKTOP_FILE" << 'EOF'
-[Desktop Entry]
-Name=J~NET Video Player
-Comment=Dark themed video player for Linux
-Exec=python3 /path/to/jnet-video-player.py %F
-Icon=video-x-generic
-Terminal=false
-Type=Application
-MimeType=video/*;audio/*;
-Categories=AudioVideo;Player;Video;
-EOF
-
-echo "Done! Run: python3 jnet-video-player.py [file]"
+echo ""
+echo "[JNET] Setup complete!"
+echo "[JNET] Run: python3 jnet-video-player.py [file]"
+echo "[JNET] Or use: ./start.sh"

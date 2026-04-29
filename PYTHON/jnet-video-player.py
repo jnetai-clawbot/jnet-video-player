@@ -5,12 +5,27 @@ Raspberry Pi 5 arm64 optimized
 Uses python-mpv as playback backend with PyQt6 GUI
 """
 
+
 import sys
 import os
 import json
 import subprocess
 import glob
 from pathlib import Path
+import traceback
+
+# Debug logging
+DEBUG = True
+def debug(msg, level="INFO"):
+    """Print debug message with [JNET] prefix"""
+    if level == "ERROR":
+        print(f"[JNET] [ERROR] {msg}")
+    elif level == "WARN":
+        print(f"[JNET] [WARN] {msg}")
+    elif DEBUG:
+        print(f"[JNET] [DEBUG] {msg}")
+
+
 
 from PyQt6.QtCore import (
     Qt, QTimer, QUrl, QSize, QRect, QRectF, QPropertyAnimation,
@@ -47,6 +62,15 @@ if not HAS_MPV:
             if os.path.exists(p):
                 lib_path = p
                 break
+    if lib_path:
+        try:
+            ctypes.CDLL(lib_path)
+            HAS_MPV_SO = True
+            debug(f"Found libmpv at: {lib_path}")
+        except:
+            pass
+
+debug(f"MPV backend: {'Available' if HAS_MPV_SO else 'Not available (will use QtMultimedia)'}")
 
 
 APP_NAME = "J~NET Video Player"
@@ -467,6 +491,7 @@ class MainWindow(QMainWindow):
         self.resize(1280, 720)
 
         # State
+        debug("Initializing J~NET Video Player...")
         self._playlist_paths = []
         self._current_index = -1
         self._is_playing = False
@@ -477,7 +502,9 @@ class MainWindow(QMainWindow):
         self._update_timer.timeout.connect(self._update_ui)
 
         # Build UI first so _video_widget exists
+        debug("Setting up UI...")
         self._setup_ui()
+        debug("UI setup complete")
 
         # Setup media player with python-mpv if available
         self._use_mpv = HAS_MPV_SO
@@ -494,32 +521,49 @@ class MainWindow(QMainWindow):
 
     def _setup_mpv(self):
         """Use python-mpv for playback"""
-        self._mpv_player = mpv.MPV(
-            wid=str(int(self._video_widget.winId())),
-            input_default_bindings=True,
-            input_vo_keyboard=True,
-            osc=True,
-            volume=80,
-            cache=True,
-            cache_pause=True,
-            demuxer_max_back_bytes=50 * 1024 * 1024,
-            demuxer_max_bytes=150 * 1024 * 1024,
-        )
-        self._mpv_player.observe_property("time-pos", self._mpv_time_changed)
-        self._mpv_player.observe_property("duration", self._mpv_duration_changed)
-        self._mpv_player.observe_property("pause", self._mpv_pause_changed)
-        self._mpv_player.observe_property("eof-reached", self._mpv_eof_reached)
+        try:
+            debug("Initializing mpv backend...")
+            mpv_wid = str(int(self._video_widget.winId()))
+            debug(f"Video widget WinID: {mpv_wid}")
+            self._mpv_player = mpv.MPV(
+                wid=mpv_wid,
+                input_default_bindings=True,
+                input_vo_keyboard=True,
+                osc=True,
+                volume=80,
+                cache=True,
+                cache_pause=True,
+                demuxer_max_back_bytes=50 * 1024 * 1024,
+                demuxer_max_bytes=150 * 1024 * 1024,
+            )
+            self._mpv_player.observe_property("time-pos", self._mpv_time_changed)
+            self._mpv_player.observe_property("duration", self._mpv_duration_changed)
+            self._mpv_player.observe_property("pause", self._mpv_pause_changed)
+            self._mpv_player.observe_property("eof-reached", self._mpv_eof_reached)
+            debug("mpv backend initialized successfully")
+        except Exception as e:
+            debug(f"mpv init failed: {e}", "ERROR")
+            debug("Falling back to QtMultimedia", "WARN")
+            self._use_mpv = False
+            self._setup_qtmedia()
 
     def _setup_qtmedia(self):
         """Fallback: use QtMultimedia"""
-        self._player = QMediaPlayer(self)
-        self._audio_output = QAudioOutput(self)
-        self._player.setAudioOutput(self._audio_output)
-        self._player.setVideoOutput(self._video_widget)
-        self._player.positionChanged.connect(self._qtmedia_position)
-        self._player.durationChanged.connect(self._qtmedia_duration)
-        self._player.mediaStatusChanged.connect(self._qtmedia_status)
-        self._player.errorOccurred.connect(self._qtmedia_error)
+        try:
+            debug("Initializing QtMultimedia backend...")
+            self._player = QMediaPlayer(self)
+            self._audio_output = QAudioOutput(self)
+            self._player.setAudioOutput(self._audio_output)
+            self._player.setVideoOutput(self._video_widget)
+            self._player.positionChanged.connect(self._qtmedia_position)
+            self._player.durationChanged.connect(self._qtmedia_duration)
+            self._player.mediaStatusChanged.connect(self._qtmedia_status)
+            self._player.errorOccurred.connect(self._qtmedia_error)
+            debug("QtMultimedia backend initialized successfully")
+        except Exception as e:
+            debug(f"QtMultimedia init failed: {e}", "ERROR")
+            debug("No playback backend available. Player will show UI only.", "ERROR")
+            self._player = None
 
     def _setup_ui(self):
         central = QWidget()
@@ -788,19 +832,29 @@ def main():
         except:
             pass
 
-    window = MainWindow()
-    window.show()
+    debug("Creating main window...")
+    try:
+        window = MainWindow()
+        window.show()
+        debug("Window displayed successfully")
 
-    # Open files from command line
-    if len(sys.argv) > 1:
-        for path in sys.argv[1:]:
-            if os.path.exists(path):
-                window._playlist_paths.append(path)
-                window._playlist_widget.add_file(path)
-        if window._playlist_paths:
-            window._current_index = 0
-            window._open_path(window._playlist_paths[0])
+        # Open files from command line
+        if len(sys.argv) > 1:
+            debug(f"Opening {len(sys.argv)-1} file(s) from command line")
+            for path in sys.argv[1:]:
+                if os.path.exists(path):
+                    window._playlist_paths.append(path)
+                    window._playlist_widget.add_file(path)
+            if window._playlist_paths:
+                window._current_index = 0
+                window._open_path(window._playlist_paths[0])
+                debug(f"Playing: {window._playlist_paths[0]}")
+    except Exception as e:
+        debug(f"Failed to create window: {e}", "ERROR")
+        traceback.print_exc()
+        sys.exit(1)
 
+    debug("Starting Qt event loop")
     sys.exit(app.exec())
 
 

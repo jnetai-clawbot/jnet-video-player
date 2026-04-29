@@ -1,21 +1,16 @@
 #!/bin/bash
-# J~NET Video Player - Python Setup Script
-# Install dependencies and desktop entry
-function venv() {
-    #python3 -m venv venv
-    python3.12 -m venv venv
-    PYTHON_PATH=$(which python3.12)
-    echo "alias python='$PYTHON_PATH'" >> venv/bin/activate
+# J~NET Video Player - Start Script
+cd "$(dirname "$0")"
+
+echo "[JNET] Starting J~NET Video Player..."
+
+# Activate virtual environment if it exists
+if [ -d "venv" ]; then
     source venv/bin/activate
-    echo "Virtual Environment setup and ready!"
-    echo ""
-}
+fi
 
+# Run with -B to skip .pyc cache
+python3 -B jnet-video-player.py "$@"
 
-set -e
-
-venv
-
-echo "Starting J~NET Video Player..."
-
-python3 jnet-video-player.py $@
+echo ""
+echo "[JNET] Player closed."

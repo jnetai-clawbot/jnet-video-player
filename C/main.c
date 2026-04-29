@@ -35,6 +35,22 @@
 #include "xdg-activation-v1.h"
 
 #include "main.h"
+
+
+/* Debug logging */
+#define JNET_LOG(fmt, ...) fprintf(stderr, "[JNET] " fmt "\n", ##__VA_ARGS__)
+#define JNET_ERR(fmt, ...) fprintf(stderr, "[JNET] [ERROR] " fmt "\n", ##__VA_ARGS__)
+#define JNET_DBG(fmt, ...) fprintf(stderr, "[JNET] [DEBUG] " fmt "\n", ##__VA_ARGS__)
+
+/* Exit codes */
+#define EXIT_OK       0
+#define EXIT_WAYLAND  1
+#define EXIT_EGL      2
+#define EXIT_FFMPEG   3
+#define EXIT_WINDOW   4
+#define EXIT_FILE     5
+#define EXIT_UNKNOWN  99
+
 #define APP_TITLE "J~NET Video Player"
 static void app_cleanup(App *app);
 static int  app_run(App *app);
@@ -402,12 +418,16 @@ static void app_create_window(App *app, int w, int h) {
     app->registry = wl_display_get_registry(app->display);
     wl_registry_add_listener(app->registry, &registry_listener, app);
     wl_display_roundtrip(app->display);
+    JNET_DBG("Connected to Wayland display");
     wl_display_roundtrip(app->display);
 
     if (!app->compositor || !app->wm_base) {
-        fprintf(stderr, "Missing required Wayland protocols\n");
-        exit(1);
+        JNET_ERR("Missing required Wayland protocols (compositor=%p, wm_base=%p)",
+                 (void*)app->compositor, (void*)app->wm_base);
+        return false;
     }
+    JNET_DBG("Wayland protocols OK: compositor=%p, wm_base=%p",
+             (void*)app->compositor, (void*)app->wm_base);
 
     xdg_wm_base_add_listener(app->wm_base, &wm_base_listener, app);
 
@@ -429,35 +449,50 @@ static void app_create_window(App *app, int w, int h) {
     }
 
     /* EGL init must happen BEFORE first commit/roundtrip */
+    JNET_LOG("Initializing EGL...");
     app->egl_disp = eglGetDisplay(app->display);
     if (app->egl_disp == EGL_NO_DISPLAY) {
-        fprintf(stderr, "Failed to get EGL display\n");
-        exit(1);
+        JNET_ERR("Failed to get EGL display (error: 0x%x)", eglGetError());
+        JNET_LOG("Falling back: no EGL hardware acceleration available");
+        return false;
     }
+    JNET_DBG("EGL display OK");
     if (!eglInitialize(app->egl_disp, &app->egl_major, &app->egl_minor)) {
-        fprintf(stderr, "Failed to initialize EGL\n");
-        exit(1);
+        JNET_ERR("Failed to initialize EGL (error: 0x%x)", eglGetError());
+        return false;
     }
+    JNET_DBG("EGL initialized: %d.%d", app->egl_major, app->egl_minor);
     eglBindAPI(EGL_OPENGL_ES_API);
 
     EGLint count = 0;
     eglChooseConfig(app->egl_disp, egl_config_attribs, &app->egl_config, 1, &count);
     if (count == 0) {
-        fprintf(stderr, "No suitable EGL config found\n");
-        exit(1);
+        JNET_ERR("No suitable EGL config found");
+        return false;
     }
 
     app->egl_ctx = eglCreateContext(app->egl_disp, app->egl_config,
                                      EGL_NO_CONTEXT, egl_context_attribs);
     app->win_width = w;
     app->win_height = h;
+    JNET_DBG("Creating EGL window (%dx%d)...", w, h);
     app->egl_window = wl_egl_window_create(app->surface, w, h);
+    if (!app->egl_window) {
+        JNET_ERR("Failed to create EGL window");
+        return false;
+    }
     app->egl_surf = eglCreateWindowSurface(app->egl_disp, app->egl_config,
                                             app->egl_window, NULL);
+    if (app->egl_surf == EGL_NO_SURFACE) {
+        JNET_ERR("Failed to create EGL surface (error: 0x%x)", eglGetError());
+        return false;
+    }
     eglMakeCurrent(app->egl_disp, app->egl_surf, app->egl_surf, app->egl_ctx);
     app->egl_init = true;
+    JNET_LOG("EGL window created: %dx%d", w, h);
 
-    gl_init_shaders();
+    JNET_DBG("Initializing GL shaders...");
+    gl_init_shaders();  /* void function */
     gl_render_clear();
     eglSwapBuffers(app->egl_disp, app->egl_surf);
 

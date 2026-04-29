@@ -1,2 +1,5 @@
-PROMPT.md
-changes.txt
+venv/
+*.pyc
+__pycache__/
+Notes.txt
+issues.txt
