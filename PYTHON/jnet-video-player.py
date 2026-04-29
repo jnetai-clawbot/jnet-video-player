@@ -476,15 +476,15 @@ class MainWindow(QMainWindow):
         self._update_timer.setInterval(250)
         self._update_timer.timeout.connect(self._update_ui)
 
+        # Build UI first so _video_widget exists
+        self._setup_ui()
+
         # Setup media player with python-mpv if available
         self._use_mpv = HAS_MPV_SO
         if self._use_mpv:
             self._setup_mpv()
         else:
             self._setup_qtmedia()
-
-        # Build UI
-        self._setup_ui()
 
         # Shortcuts
         self._setup_shortcuts()
